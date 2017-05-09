@@ -1,0 +1,46 @@
+s1
+
+
+(s1 (s1 det A 0.25))
+(s1 (s1 det AN 0.25))
+(s1 (s1 det THE 0.3))
+(s1 (s1 det THAT 0.1))
+(s1 (s1 det THIS 0.1))
+
+
+(s1 (s1 n PANDA 0.1))
+(s1 (s1 n SHOOTS 0.04))
+(s1 (s1 n EATS 0.01))
+(s1 (s1 n LEAVES 0.1))
+(s1 (s1 n CAN 0.15))
+(s1 (s1 n TIME 0.2))
+(s1 (s1 n LIKE 0.025))
+(s1 (s1 n ARROW 1))
+(s1 (s1 n FLIES 0.1))
+(s1 (s1 n WORKS 0.05))
+(s1 (s1 n FISH 0.1))
+(s1 (s1 n HOPE 0.075))
+
+(s1 (s1 v EATS 0.1))
+(s1 (s1 v SHOOTS 0.1))
+(s1 (s1 v LEAVES 0.1))
+(s1 (s1 v CAN 0.1))
+(s1 (s1 v TIME 0.1))
+(s1 (s1 v FLIES 0.1))
+(s1 (s1 v LIKE 0.1))
+(s1 (s1 v HOPE 0.1))
+(s1 (s1 v WORKS 0.1))
+(s1 (s1 v FISH 0.1))
+
+
+(s1 (s1 aux CAN 1))
+
+(s1 (s1 prep LIKE 1))
+
+(s1 (s1 pro THEY 0.4))
+(s1 (s1 pro I 0.4))
+(s1 (s1 pro THIS 0.1))
+(s1 (s1 pro THAT 0.1))
+
+(s1 (s1 conj AND 0.75))
+(s1 (s1 conj THAT 0.25))
