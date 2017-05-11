@@ -13,7 +13,7 @@ def parse_bigram_wfsa(list_a):
 
 
 
-
+#jhggj
 def parse_flower_wfst(list_a):
     data_dict = defaultdict(lambda : defaultdict(float))
     for i in range(len(list_a)):
