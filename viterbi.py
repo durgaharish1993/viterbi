@@ -90,12 +90,12 @@ class Viterbi(object):
                         temp_num = find_best(n - n1, best, w, u, best_val) * self.p_prior[(w,u)][v] * self.p_noise_channel[v][x]
                     if temp_num > max_num:
                         max_num = temp_num
-                        max_str = str(w)+' '+str(u)
+                        max_str = w
                         temp_str = x
                         num = n-n1
 
             best[n][(u, v)] = max_num
-            best_path[n][temp_str] = (max_str,num)
+            best_path[n][(u,v)] = (max_str,num)
 
             return best[n][(u,v)]
 
@@ -115,19 +115,40 @@ class Viterbi(object):
                 temp_num = temp_num1*temp_num2
                 if temp_num> max_num:
                     max_num = temp_num
-                    max_str = str(u)+' '+str(v)
-        best_path['</s>'] = max_str
-        for key in best_path:
-            print(key,best_path[key])
-        return max_num
+                    max_str = (u,v)
+        best_path[len(self.word_list)][max_str] = ('</s>',1)
+
+        return max_num,self.backward(best_path)
 
 
 
 
 
     def backward(self,best_path):
-        str_data = ''
-        for i in range(len(self.word_list)):
+        leng=len(self.word_list)
+        max_str = []
+        while True:
 
-            str_data+=best_path[i]+' '
-        return str_data
+
+
+
+            if leng==len(self.word_list):
+                key=list(best_path[leng].keys())[0]
+                max_str+=[key[1],key[0]]
+                leng-=1
+
+
+            else:
+
+                letter = best_path[leng][key][0]
+                leng =best_path[leng][key][1]
+                if letter == '<s>':
+                    break
+                max_str+=[letter]
+                key = (letter,key[0])
+
+
+
+
+
+        return ' '.join(max_str[::-1])
