@@ -36,7 +36,9 @@ class Viterbi(object):
 
         start_gram = tuple([self.start_tag for i in range(self.markov_process)])
         #print(start_gram)
+
         best[-1][start_gram] = 1.0
+
         for i in range(len(self.u_prior)):
             for j in range(len(self.u_prior)):
 
@@ -46,11 +48,12 @@ class Viterbi(object):
 
 
 
+
         #######################
 
 
         #######Intialization for the best path
-        best_path = defaultdict(str)
+        best_path = defaultdict(lambda : defaultdict(str))
         ######
 
 
@@ -62,20 +65,38 @@ class Viterbi(object):
                     return best[n][(u,v)]
 
 
-            max_num = float('-inf')
+            x_list = {}
+            if n >= 2:
+                x_list[3] = self.word_list[n - 2] + ' ' + self.word_list[n - 1] + ' ' + self.word_list[n]
+                x_list[2] = self.word_list[n - 1] + ' ' + self.word_list[n]
+                x_list[1] = self.word_list[n]
+            if n == 1:
+                x_list[2] = self.word_list[n - 1] + ' ' + self.word_list[n]
+                x_list[1] = self.word_list[n]
+            if n == 0:
+                x_list[1] = self.word_list[n]
+
+
+
             max_str = None
+            temp_str = None
+            max_num = float('-inf')
             for i in range(len(self.u_prior)):
                 w = self.u_prior[i]
-                x = self.word_list[n]
-
-                temp_num = find_best(n - 1, best, w, u, best_val) * self.p_prior[(w,u)][v] * self.p_noise_channel[v][x]
-                if temp_num > max_num:
-                    max_num = temp_num
-                    max_str = w
+                for n1,x in x_list.items():
+                    if n-n1 in best and (w,u) in best[n-n1]:
+                        temp_num = best[n-n1][(w,u)] * self.p_prior[(w,u)][v] * self.p_noise_channel[v][x]
+                    else:
+                        temp_num = find_best(n - n1, best, w, u, best_val) * self.p_prior[(w,u)][v] * self.p_noise_channel[v][x]
+                    if temp_num > max_num:
+                        max_num = temp_num
+                        max_str = str(w)+' '+str(u)
+                        temp_str = x
+                        num = n-n1
 
             best[n][(u, v)] = max_num
-            best_path[n] = max_str
-            best_val = max(best_val,max_num)
+            best_path[n][temp_str] = (max_str,num)
+
             return best[n][(u,v)]
 
         ############################
@@ -95,13 +116,10 @@ class Viterbi(object):
                 if temp_num> max_num:
                     max_num = temp_num
                     max_str = str(u)+' '+str(v)
-        best_path[n] = max_str
-        for key in best:
-            if key!=-1:
-                best_val  = max(max(best[key].values()),best_val)
-
-
-        return max(best_val,max_num)
+        best_path['</s>'] = max_str
+        for key in best_path:
+            print(key,best_path[key])
+        return max_num
 
 
 
