@@ -76,7 +76,7 @@ if __name__=='__main__':
     start_tag = '<s>'
     end_tag = '</s>'
     markov_process = 2
-    word_list = 'N A I T O'.split()
+    word_list = 'A A'.split()
 
 
     ######
