@@ -1,113 +1,95 @@
 from collections import defaultdict
-from viterbi import Viterbi
 
+FILEPATH_EPRON_JPRON_PROBS = 'epron-jpron.probs'
+FILEPATH_EPRON_PROBS = 'epron.probs'
+START = '<s> <s>'
+END_TAG = '</s>'
 
+def import_probs(filename):
+    probs = defaultdict(lambda: defaultdict(float))
+    states = defaultdict(list)
+    with open(filename, 'r') as fp:
+        for line in fp:
+            lparts = line.split('#')
+            p = lparts[0].split(':')
+            lparts = [p[0].strip(), p[1].strip(), float(lparts[1])]            
+            probs[lparts[1]][lparts[0]] = lparts[2]
+            states[lparts[0]] += [lparts[1]]
+    return probs, states
 
+def build_bigram_model(filename_probs):
+    model = defaultdict(lambda: defaultdict(float))
+    transit_to_state = defaultdict(list)
+    with open(filename_probs, 'r') as fp:
+        for line in fp:
+            sb_ln = line.split()
+            prev_state = sb_ln[0] + ' ' + sb_ln[1]
+            
 
+            if prev_state == START: #To increase performance in viterbi
+                cur_state = sb_ln[1] + ' ' + sb_ln[3]
+                transit_to_state[START] += [(prev_state, cur_state, float(sb_ln[5]))]
+            if sb_ln[3] == END_TAG:
+                cur_state = END_TAG
+                transit_to_state['*e*'] += [(prev_state, cur_state, float(sb_ln[5]))]            
+            else:
+                cur_state = sb_ln[1] + ' ' + sb_ln[3]
+                transit_to_state[sb_ln[3]] += [(prev_state, cur_state, float(sb_ln[5]))]
+            model[cur_state][prev_state] = float(sb_ln[5])
+    return model, transit_to_state, 
 
-def read_file(file_name):
-    data =[]
-    fp=open(file_name)
-    for line in fp.readlines():
-        if line!='\n':
-            data+=[line.split('\n')[0]]
+def Viterbi(obs, bigram_models, tag_wrd_prob):    
+    bi_model = bigram_models[0]
+    bi_transitions = bigram_models[1]
+    states = [START] + bi_model.keys()
+    N = len(states)
+    T = len(obs)    
 
-    return data
+    #initialization
+    viterbi = [[0.0]*T for i in xrange(N)]
+    backpointer = [[0]*T for i in xrange(N)]
+    for s in bi_transitions[START]:
+        trans = s[1].split()[1]
+        viterbi[states.index(s)][0] = bi_model[s][START] * tag_wrd_prob[obs[0]][trans]
 
+    #recursion
+    for t in xrange(1,T):
+        possible_transitions = tag_wrd_prob[obs[t]].keys()
+        for tr in bi_transitions:
+            if tr not in possible_transitions:
+                continue
+        # for s in xrange(N):
+            cur_state = states[s]
+            if cur_state == START:
+                continue
+            max_pair = ()
+            if cur_state != END_TAG:                
+                trans = cur_state.split()[1]
+                max_pair = max((viterbi[states.index(s_p)][t-1]*bi_model[cur_state][s_p]*tag_wrd_prob[obs[t]][trans], states.index(s_p))
+                                for s_p in bi_model[cur_state])
 
-def get_prob(data,Noise=False):
-
-    data_dict = defaultdict(lambda :defaultdict(float))
-
-    if Noise:
-        input_unique_words = set()
-        output_unique_words = set()
-    else:
-        input_unique_words = set()
-        output_unique_words =[ None ]
-
-    for i in range(len(data)):
-
-
-
-
-            ####
-
-            ######
-        if Noise:
-            temp_list = data[i].split(':')
-            input = temp_list[0]
-            output = temp_list[1].split('#')[0].strip()
-            prob = float(temp_list[1].split('#')[-1])
-            input = input.strip()
-
-            data_dict[input][output] = prob
-
-
-            output_unique_words.add(output)
-            for temp in input.split(' ')[:-1]:
-                input_unique_words.add(temp)
-        else:
-
-            temp_list = data[i].split(':')
-            input = temp_list[0]
-            output = temp_list[1].split('#')[0].strip()
-            prob = float(temp_list[1].split('#')[-1])
-            input_tuple = tuple(input.split(' ')[:-1])
-            data_dict[input_tuple][output] = prob
-
-            input_unique_words.add(output)
-            for temp in input.split(' ')[:-1]:
-                input_unique_words.add(temp)
-
-
-
-
-    return data_dict,[list(input_unique_words),list(output_unique_words)]
-
-
-
-
-#def __init__(self,p_noise_channel,p_prior,u_prior,u_i_noise,u_o_noise,word_list, start_tag='<s>', end_tag='<\s>',markov_process=2):
-if __name__=='__main__':
-
-    file_name = 'epron.probs'
-    file_name1 = 'epron-jpron.probs'
-    start_tag = '<s>'
-    end_tag = '</s>'
-    markov_process = 2
-    word_list = 'N A A'.split()
-
-
-    ######
-    epron_data = read_file(file_name)
-    p_prior,unique_words = get_prob(epron_data)
-
-    if unique_words[1]==[None]:
-        u_prior = unique_words[0]
-
+            else:
+                max_pair = max((viterbi[states.index(s_p)][t-1]*bi_model[cur_state][s_p], states.index(s_p))
+                                for s_p in bi_model[cur_state])
+            viterbi[s][t] = max_pair[0]
+            backpointer[s][t] = max_pair[1]
+    path = ''
+    st = states.index(END_TAG)
+    for t in xrange(T-1,-1, -1):
+        path += states[st] + ' '
+        print states[st]
+        st = backpointer[st][t]
+    return viterbi[states.index(END_TAG)][T-1], path
 
 
 
 
 
 
-
-
-    #####
-
-    data  = read_file(file_name1)
-    p_noise_channel, unique_words = get_prob(data,Noise=True)
-    u_i_noise,u_o_noise=unique_words[0], unique_words[1]
-
-    v=Viterbi(p_noise_channel,p_prior,u_prior,u_i_noise,u_o_noise,word_list,start_tag,end_tag,markov_process)
-
-    a=v.farword()
-    print(a)
-
-
-
-
-
-
+if __name__ == '__main__':
+    epron_jpron_probs, s = import_probs(FILEPATH_EPRON_JPRON_PROBS)
+    bi_models = build_bigram_model(FILEPATH_EPRON_PROBS)    
+    obs = 'P I A N O'
+    obs = obs.split()
+    print Viterbi(obs, bi_models, epron_jpron_probs)
 
