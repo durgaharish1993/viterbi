@@ -38,10 +38,18 @@ def build_bigram_model(filename_probs):
             model[cur_state][prev_state] = float(sb_ln[5])
     return model, transit_to_state, 
 
+def create_state_list(possible_transitions, bi_transitions):
+    st = defaultdict(int)
+    for tr in possible_transitions:
+        for tup in bi_transitions[tr]:
+            st[tup[1]] += 1
+    return st.keys()
+
+
 def Viterbi(obs, bigram_models, tag_wrd_prob):    
     bi_model = bigram_models[0]
     bi_transitions = bigram_models[1]
-    states = [START] + bi_model.keys()
+    states = [START] + bi_model.keys()  
     N = len(states)
     T = len(obs)    
 
@@ -50,29 +58,29 @@ def Viterbi(obs, bigram_models, tag_wrd_prob):
     backpointer = [[0]*T for i in xrange(N)]
     for s in bi_transitions[START]:
         trans = s[1].split()[1]
-        viterbi[states.index(s)][0] = bi_model[s][START] * tag_wrd_prob[obs[0]][trans]
+        viterbi[states.index(s[1])][0] = bi_model[s[1]][START] * tag_wrd_prob[obs[0]][trans]
 
     #recursion
     for t in xrange(1,T):
         possible_transitions = tag_wrd_prob[obs[t]].keys()
-        for tr in bi_transitions:
-            if tr not in possible_transitions:
-                continue
-        # for s in xrange(N):
+        st_list = create_state_list(possible_transitions, bi_transitions)
+        # for cur_state in st_list:
+        #     s = states.index(cur_state)
+        for s in xrange(N):
             cur_state = states[s]
-            if cur_state == START:
+            if cur_state == START or cur_state == END_TAG:
                 continue
-            max_pair = ()
-            if cur_state != END_TAG:                
-                trans = cur_state.split()[1]
-                max_pair = max((viterbi[states.index(s_p)][t-1]*bi_model[cur_state][s_p]*tag_wrd_prob[obs[t]][trans], states.index(s_p))
-                                for s_p in bi_model[cur_state])
-
-            else:
-                max_pair = max((viterbi[states.index(s_p)][t-1]*bi_model[cur_state][s_p], states.index(s_p))
-                                for s_p in bi_model[cur_state])
+            max_pair = ()                         
+            trans = cur_state.split()[1]                
+            max_pair = max((viterbi[states.index(s_p)][t-1]*bi_model[cur_state][s_p]*tag_wrd_prob[obs[t]][trans], states.index(s_p))
+                            for s_p in bi_model[cur_state])
             viterbi[s][t] = max_pair[0]
             backpointer[s][t] = max_pair[1]
+    
+    max_pair = max((viterbi[states.index(s_p)][T-1]*bi_model[END_TAG][s_p], states.index(s_p))
+                                for s_p in bi_model[END_TAG])
+    viterbi[states.index(END_TAG)][T-1] = max_pair[0]
+    backpointer[states.index(END_TAG)][T-1] = max_pair[1]
     path = ''
     st = states.index(END_TAG)
     for t in xrange(T-1,-1, -1):
@@ -82,14 +90,11 @@ def Viterbi(obs, bigram_models, tag_wrd_prob):
     return viterbi[states.index(END_TAG)][T-1], path
 
 
-
-
-
-
 if __name__ == '__main__':
     epron_jpron_probs, s = import_probs(FILEPATH_EPRON_JPRON_PROBS)
     bi_models = build_bigram_model(FILEPATH_EPRON_PROBS)    
     obs = 'P I A N O'
+    obs  = 'R A M P'
     obs = obs.split()
     print Viterbi(obs, bi_models, epron_jpron_probs)
 
