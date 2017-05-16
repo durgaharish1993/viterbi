@@ -1,4 +1,5 @@
 from collections import defaultdict
+import time
 
 FILEPATH_EPRON_JPRON_PROBS = 'epron-jpron.probs'
 FILEPATH_EPRON_PROBS = 'epron.probs'
@@ -117,6 +118,7 @@ def Viterbi(obs, bigram, lexicon):
 
 
 if __name__ == '__main__':
+    s1 = time.clock()
     lexicon, s = build_lexicon_model(FILEPATH_EPRON_JPRON_PROBS)
     bigram = build_bigram_model(FILEPATH_EPRON_PROBS)    
     obs_str = 'N A I T O'
@@ -124,5 +126,8 @@ if __name__ == '__main__':
     res = []
     for obs in obs_list:
         res += [Viterbi(obs, bigram, lexicon)]
+    s2 = time.clock()
     print res
+    print 'time: ',s2-s1
+
 
