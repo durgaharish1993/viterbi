@@ -38,11 +38,39 @@ def create_state_list(possible_transitions, bi_transitions):
             st[tup[1]] += 1
     return st.keys()
 
+def valid_jpron_sequences(obs, jpron_states):
+    obs = obs.split()
+    valid = [['']]
+    non_valid = [['']]
+    for o in obs:
+        vt = []
+        nt = []            
+        for va in valid:
+            if o in jpron_states:
+                vt += [va+[o]]
+            else:
+                nt += [va+[o]]
+            if va[-1]+' '+o in jpron_states:
+                vt += [va[:-1]+[va[-1]+' '+o]]
+            else:
+                nt += [va[:-1]+[va[-1]+' '+o]]
+
+        for nv in non_valid:        
+            if nv[-1]+' '+o in jpron_states:
+                vt += [nv[:-1]+[nv[-1]+' '+o]]
+            else:
+                nt += [nv[:-1]+[nv[-1]+' '+o]]
+        valid = vt
+        non_valid = nt
+
+    valid = [x[1:] for x in valid]
+    return valid
+
 
 def Viterbi(obs, bigram, lexicon):    
     states = [START] + bigram.keys()  
     N = len(states)
-    T = len(obs)    
+    T = len(obs)
 
     #initialization
     viterbi = [[0.0]*T for i in xrange(N)]
@@ -85,13 +113,16 @@ def Viterbi(obs, bigram, lexicon):
         path += [states[st]]
         st = backpointer[st][t]    
     path = ' '.join([x.split()[1] for x in path[::-1]])
-    return path, viterbi[states.index(END_TAG)][T-1] 
+    return viterbi[states.index(END_TAG)][T-1], path
 
 
 if __name__ == '__main__':
     lexicon, s = build_lexicon_model(FILEPATH_EPRON_JPRON_PROBS)
     bigram = build_bigram_model(FILEPATH_EPRON_PROBS)    
-    obs = 'P I A N O'
-    obs = obs.split()
-    print Viterbi(obs, bigram, lexicon)
+    obs_str = 'N A I T O'
+    obs_list = valid_jpron_sequences(obs_str, lexicon.keys())
+    res = []
+    for obs in obs_list:
+        res += [Viterbi(obs, bigram, lexicon)]
+    print res
 
