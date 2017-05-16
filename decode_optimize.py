@@ -19,50 +19,25 @@ def forward_bottom_top(transition,emission,word_list):
         if i==0: x_list=[(1,' '.join(word_list[i:i+1]))]
         v_list=[]
         for (_, x) in x_list: v_list+=(list(emission[x].keys()))
-
+        print(v_list)
         for v in v_list:
             for u in transition[v]:
-                max_val = float('-inf')
+                max_val = 0;max_n1 = None;max_w = None
                 for (n1, x1) in x_list:
                     for w in transition[v][u]:
                         #y1 = (n1, w, best[i - n1][u][w] * transition[v][u][w] * emission[x1][v])
-                        max_val = max(max_val,best[i - n1][u][w] * transition[v][u][w] * emission[x1][v])
-                        max_n1= n1
-                        max_w = w
-                
+                        temp_val = best[i - n1][u][w] * transition[v][u][w] * emission[x1][v]
+                        if temp_val> max_val:
+                            max_val = temp_val
+                            max_n1= n1
+                            max_w = w
+
+                best_path[i][v][u] = (max_n1,max_w,max_val)
+                best[i][v][u] = max_val
+                '''
+                This was previous attempt.
+                '''
                 #best_path[i][v][u],best[i][v][u]=max( (((n1,w,best[i-n1][u][w]*transition[v][u][w] * emission[x1][v]),best[i-n1][u][w]*transition[v][u][w] * emission[x1][v]) for w in transition[v][u] for(n1,x1) in x_list),key=lambda tup:tup[1])
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     len_word = len(word_list)-1
     max_val = max(best[len_word][word_list[len_word]][u] for u in best[len_word][word_list[len_word]])
@@ -79,7 +54,7 @@ def back_track(best_path,u,v,leng,n):
     max_list = []
 
     while True:
-        n1,u1,_=best_path[leng-n][v][u]
+        n1,u1,_=best_path[leng][v][u]
 
         leng -=n1
         v=u
@@ -137,7 +112,7 @@ if __name__=='__main__':
     #letter_list = 'N A I T O'.split()+['</s>']
     #letter_list = 'P I A N O'.split() + ['</s>']
     #letter_list = 'B I D E O T E E P U'.split() + ['</s>']
-    s2 = time.clock()
+    #s2 = time.clock()
     #print('Time take to read files',s2-s1)
     #a1=forward_bottom_top(transition,emission,letter_list)
     #a2=forward_bottom_top(transition,emission,letter_list)
