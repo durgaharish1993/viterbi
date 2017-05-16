@@ -22,8 +22,48 @@ def forward_bottom_top(transition,emission,word_list):
 
         for v in v_list:
             for u in transition[v]:
-                #temp_value =best[i - n1][u][w] * transition[v][u][w] * emission[x1][v]
-                best_path[i][v][u],best[i][v][u]=max( (((n1,w,best[i-n1][u][w]*transition[v][u][w] * emission[x1][v]),best[i-n1][u][w]*transition[v][u][w] * emission[x1][v]) for w in transition[v][u] for(n1,x1) in x_list),key=lambda tup:tup[1])
+                max_val = float('-inf')
+                for (n1, x1) in x_list:
+                    for w in transition[v][u]:
+                        #y1 = (n1, w, best[i - n1][u][w] * transition[v][u][w] * emission[x1][v])
+                        max_val = max(max_val,best[i - n1][u][w] * transition[v][u][w] * emission[x1][v])
+                        max_n1= n1
+                        max_w = w
+                
+                #best_path[i][v][u],best[i][v][u]=max( (((n1,w,best[i-n1][u][w]*transition[v][u][w] * emission[x1][v]),best[i-n1][u][w]*transition[v][u][w] * emission[x1][v]) for w in transition[v][u] for(n1,x1) in x_list),key=lambda tup:tup[1])
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     len_word = len(word_list)-1
     max_val = max(best[len_word][word_list[len_word]][u] for u in best[len_word][word_list[len_word]])
     (last_str,(_,_,max_val)) = max(((u,best_path[len_word][word_list[len_word]][u]) for u in best_path[len_word][word_list[len_word]]), key= lambda tup:tup[1][2])
@@ -57,6 +97,7 @@ def back_track(best_path,u,v,leng,n):
 
 
 if __name__=='__main__':
+
     s1=time.clock()
     argu=sys.argv
     if len(argu)>1:
@@ -119,3 +160,6 @@ if __name__=='__main__':
         #print(letter_list)
         a=forward_bottom_top(transition,emission,letter_list)
         print(str(a[1])+ ' # '+ str('%.6e')%a[0])
+
+    s3=time.clock()
+    print('Time taken:',s3-s1)
