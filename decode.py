@@ -46,11 +46,11 @@ def Viterbi(obs, bigram, lexicon):
 
     #initialization
     viterbi = [[0.0]*T for i in xrange(N)]
-    backpointer = [[0]*T for i in xrange(N)]
-    for en_tr, tr_prob in lexicon[obs[0]].items():
+    backpointer = [[-1]*T for i in xrange(N)]
+    for en_tr, tr_prob in lexicon[obs[0]].items():        
         viterbi[states.index('<s> '+ en_tr)][0] = bigram['<s> '+ en_tr][START] * tr_prob
-        backpointer[states.index('<s> '+ en_tr)][0] = states.index(START)
-
+        backpointer[states.index('<s> '+ en_tr)][0] = states.index(START)        
+        
     #recursion
     for t in xrange(1,T):
         possible_transitions = lexicon[obs[t]].keys()
@@ -61,26 +61,31 @@ def Viterbi(obs, bigram, lexicon):
             cur_state = states[s]
             if cur_state == START or cur_state == END_TAG:
                 continue
-            max_index = ()                         
-            trans = cur_state.split()[1]            
+            trans = cur_state.split()[1]
+            if lexicon[obs[t]][trans] == 0.0:
+                continue
+            max_index = ()                                     
             max_index = max((viterbi[states.index(s_p)][t-1]*bigram[cur_state][s_p]*lexicon[obs[t]][trans], states.index(s_p))
                             for s_p in bigram[cur_state])
+            if max_index[0] == 0.0:                
+                continue
+
             viterbi[s][t] = max_index[0]
             backpointer[s][t] = max_index[1]
-    
+     
     max_index = max((viterbi[states.index(s_p)][T-1]*bigram[END_TAG][s_p], states.index(s_p))
                                 for s_p in bigram[END_TAG])
     viterbi[states.index(END_TAG)][T-1] = max_index[0]
     backpointer[states.index(END_TAG)][T-1] = max_index[1]
-    path = ''
+
     st = states.index(END_TAG)
+    st = backpointer[st][T-1]
+    path = []
     for t in xrange(T-1,-1, -1):
-        path += states[st] + ' '
-        print states[st]
-        st = backpointer[st][t]
-    path += states[st] + ' '
-    print states[st]
-    return viterbi[states.index(END_TAG)][T-1], path
+        path += [states[st]]
+        st = backpointer[st][t]    
+    path = ' '.join([x.split()[1] for x in path[::-1]])
+    return path, viterbi[states.index(END_TAG)][T-1] 
 
 
 if __name__ == '__main__':
