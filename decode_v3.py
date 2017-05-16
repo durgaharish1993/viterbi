@@ -43,23 +43,34 @@ def forward_bottom_top_kbest(transition,emission,letter_list,k_best_orginal=1):
     '''
 
     for i in range(len(letter_list)):
-        x = letter_list[i]
-        for v in emission[x]:
+        if i>=2: x_list=[(3,' '.join(letter_list[i-2:i+1])),(2,' '.join(letter_list[i-1:i+1])),(1,' '.join(letter_list[i:i+1]))];
+        if i==1: x_list=[(2,' '.join(letter_list[i-1:i+1])),(1,' '.join(letter_list[i:i+1]))]
+        if i==0: x_list=[(1,' '.join(letter_list[i:i+1]))]
+        v_list = []
+        for (_, x) in x_list: v_list += (list(emission[x].keys()))
+        for v in v_list:
             for u in transition[v]:
-                if v=='</s>' and u =='N':
-                    print('I am hre')
-                temp_arr = []
-                temp_t_arr = []
-                best_copy = defaultdict(lambda : [0]*k_best)
-                for t in best[i-1][u]:
-                    best_copy[t] = best[i-1][u][t]
+                temp_arr = []; temp_t_arr = []
+                for (n1,x) in x_list:
+                    best_copy = defaultdict(lambda : [0]*k_best)
+                    for t in best[i-n1][u]:
+                        best_copy[t] = best[i-n1][u][t]
 
-                for o in range(k_best):
-                    val,t,p=pop_heapq(best_copy, i - 1, u, v,transition)
-                    temp_arr+=[ val*p*emission[x][v] ]
-                    temp_t_arr+=[(t,val*p*emission[x][v])]
-                best[i][v][u] = sorted(temp_arr,reverse=True)
-                best_path[i][v][u] = sorted(temp_t_arr,key= lambda tup:tup[1],reverse = True)
+                    for o in range(k_best):
+                        val, t, p = pop_heapq(best_copy, i - n1, u, v, transition)
+                        temp_arr += [val * p * emission[x][v]]
+                        temp_t_arr += [(t,i-n1, val * p * emission[x][v])]
+
+                best[i][v][u]=sorted(temp_arr,reverse=True)
+                best_path[i][v][u] = sorted(temp_t_arr,key= lambda tup:tup[2],reverse = True)
+
+                #
+                # for o in range(k_best):
+                #     val,t,p=pop_heapq(best_copy, i - 1, u, v,transition)
+                #     temp_arr+=[ val*p*emission[x][v] ]
+                #     temp_t_arr+=[(t,val*p*emission[x][v])]
+                # best[i][v][u] = sorted(temp_arr,reverse=True)
+                # best_path[i][v][u] = sorted(temp_t_arr,key= lambda tup:tup[1],reverse = True)
 
     k_best_list = []
     best_copy = defaultdict(lambda : [0]*k_best)
@@ -119,7 +130,7 @@ if __name__=='__main__':
     emission['</s>']['</s>'] =1
 
     #letter_list = 'H E E S U B U KK U R I S A A TCH I S A I E N T I S U T O'.split()+['</s>']
-    letter_list = 'P'.split()+['</s>']
+    letter_list = 'N A I T O'.split()+['</s>']
     s2 = time.clock()
     print('Time take to read files',s2-s1)
     a1=forward_bottom_top_kbest(transition,emission,letter_list,k_best_orginal=3)
