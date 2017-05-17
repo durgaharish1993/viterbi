@@ -1,35 +1,35 @@
-<s> <s> : det # 0.3
-<s> <s> : pro # 0.2
-<s> <s> : n # 0.15
-<s> <s> : prep # 0.05
-<s> <s> : aux # 0.2
-<s> <s> : v # 0.1
-<s> pro : v # 0.5
-<s> pro : aux # 0.25
-<s> pro : conj # 0.25
-<s> det : n # 0.5
-<s> det : v # 0.5
-<s> n : n # 0.05
-<s> n : conj # 0.2
-<s> n : v # 0.5
-<s> n : aux # 0.25
-pro v : pro # 0.25
-pro v : det # 0.35
-pro v : n # 0.15
-pro v : conj # 0.05
-pro v : prep # 0.2
-pro conj : pro # 0.2
-pro conj : det # 0.2
-pro conj : n # 0.3
-pro conj : v # 0.2
-pro conj : aux # 0.1
-<s> prep : det # 0.65
-<s> prep : n # 0.35
-pro aux : v # 0.7
-pro aux : pro # 0.1
-pro aux : n # 0.1
-pro aux : det # 0.1
-<s> pro : </s> # 0.3
-<s> n : </s> # 0.45
-pro v : </s> # 0.15
-<s> det : </s> # 0.1
+<s> : det # 0.3
+<s> : pro # 0.2
+<s> : n # 0.15
+<s> : prep # 0.05
+<s> : aux # 0.2
+<s> : v # 0.1
+pro : v # 0.5
+pro : aux # 0.25
+pro : conj # 0.25
+det : n # 0.5
+det : v # 0.5
+n : n # 0.05
+n : conj # 0.2
+n : v # 0.5
+n : aux # 0.25
+v : pro # 0.25
+v : det # 0.35
+v : n # 0.15
+v : conj # 0.05
+v : prep # 0.2
+conj : pro # 0.2
+conj : det # 0.2
+conj : n # 0.3
+conj : v # 0.2
+conj : aux # 0.1
+prep : det # 0.65
+prep : n # 0.35
+aux : v # 0.7
+aux : pro # 0.1
+aux : n # 0.1
+aux : det # 0.1
+pro : </s> # 0.3
+n : </s> # 0.45
+v : </s> # 0.15
+det : </s> # 0.1

@@ -1,9 +1,9 @@
 from collections import defaultdict
-import time
+import sys
 
-FILEPATH_LEXICON_PROBS = 'lexicon.prob'
-FILEPATH_BIGRAM_PROBS = 'bigram.prob'
-START = '<s> <s>'
+FILEPATH_LEXICON_PROBS = 'lexicon.wfst'
+FILEPATH_BIGRAM_PROBS = 'bigram.wfsa'
+START_TAG = '<s>'
 END_TAG = '</s>'
 
 def build_lexicon_model(filename):
@@ -23,17 +23,13 @@ def build_bigram_model(filename_probs):
     with open(filename_probs, 'r') as fp:
         for line in fp:
             sb_ln = line.split()
-            prev_state = sb_ln[0] + ' ' + sb_ln[1]
-            
-            if sb_ln[3] == END_TAG:
-                cur_state = END_TAG
-            else:
-                cur_state = sb_ln[1] + ' ' + sb_ln[3]                
-            model[cur_state][prev_state] = float(sb_ln[5])
+            prev_state = sb_ln[0]
+            cur_state = sb_ln[2]
+            model[cur_state][prev_state] = float(sb_ln[4])
     return model
 
 def Viterbi(obs, bigram, lexicon):    
-    states = [START] + bigram.keys()  
+    states = [START_TAG] + bigram.keys()  
     N = len(states)
     T = len(obs)
 
@@ -41,20 +37,16 @@ def Viterbi(obs, bigram, lexicon):
     viterbi = [[0.0]*T for i in xrange(N)]
     backpointer = [[-1]*T for i in xrange(N)]
     for en_tr, tr_prob in lexicon[obs[0]].items():        
-        viterbi[states.index('<s> '+ en_tr)][0] = bigram['<s> '+ en_tr][START] * tr_prob
-        backpointer[states.index('<s> '+ en_tr)][0] = states.index(START)        
+        viterbi[states.index(en_tr)][0] = bigram[en_tr][START_TAG] * tr_prob
+        backpointer[states.index(en_tr)][0] = states.index(START_TAG)        
         
     #recursion
-    for t in xrange(1,T):
-        possible_transitions = lexicon[obs[t]].keys()
-        # st_list = create_state_list(possible_transitions, bi_transitions)
-        # for cur_state in st_list:
-        #     s = states.index(cur_state)
+    for t in xrange(1,T):        
         for s in xrange(N):
             cur_state = states[s]
-            if cur_state == START or cur_state == END_TAG:
+            if cur_state == START_TAG or cur_state == END_TAG:
                 continue
-            trans = cur_state.split()[1]
+            trans = cur_state
             if lexicon[obs[t]][trans] == 0.0:
                 continue
             max_index = ()                                     
@@ -77,13 +69,56 @@ def Viterbi(obs, bigram, lexicon):
     for t in xrange(T-1,-1, -1):
         path += [states[st]]
         st = backpointer[st][t]    
-    path = ' '.join([x.split()[1] for x in path[::-1]])
+    path = ' '.join([x.split()[0] for x in path[::-1]])
     return viterbi[states.index(END_TAG)][T-1], path
 
+def convert_lexicon_to_prob(filename):
+    with open(filename, 'r') as fp:
+        lines = []
+        for l in fp:
+            l = l.replace('(','').replace(')','').strip()
+            if l != '':
+                lines += [l.split()]
+    
+    with open('lexicon.prob', 'w') as fp:
+        for l in lines[1:]:
+            fp.write(l[2]+' : '+l[3]+' # '+l[4]+'\n')
+
+def convert_bigram_to_prob(filename):
+    with open(filename, 'r') as fp:        
+        lines = []
+        for l in fp:
+            l = l.replace('(','').replace(')','').strip()
+            if l != '':
+                lines += [l.split()]
+    
+    states = defaultdict(str)
+    states[lines[0][0]] = END_TAG
+    states[lines[1][0]] = START_TAG
+    with open('bigram.prob', 'w') as fp:        
+        for l in lines[1:]:
+            if l[2] == '*e*':
+                l[2] = END_TAG
+            if l[1] not in states:
+                states[l[1]] = l[2]        
+            fp.write(states[l[0]]+' : '+l[2]+' # '+l[3]+'\n')    
 
 if __name__ == '__main__':
-    lexicon, s = build_lexicon_model(FILEPATH_LEXICON_PROBS)
-    bigram = build_bigram_model(FILEPATH_BIGRAM_PROBS)        
-    obs_str = 'I HOPE THAT THIS WORKS'
+    f = sys.stdin
+    obs_str = f.readline()
+
+    arg = sys.argv
+    if len(arg) > 1:        
+        FILEPATH_BIGRAM_PROBS = arg[1]
+        FILEPATH_LEXICON_PROBS = arg[2]
+
+    convert_lexicon_to_prob(FILEPATH_LEXICON_PROBS)
+    convert_bigram_to_prob(FILEPATH_BIGRAM_PROBS)
+    
+
+    lexicon, s = build_lexicon_model('lexicon.prob')
+    bigram = build_bigram_model('bigram.prob')        
+
     obs = obs_str.split()
-    print Viterbi(obs, bigram, lexicon)    
+    tagging =  Viterbi(obs, bigram, lexicon)
+    print tagging[1], tagging[0]

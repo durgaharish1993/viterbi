@@ -41,33 +41,33 @@ def create_state_list(possible_transitions, bi_transitions):
             st[tup[1]] += 1
     return st.keys()
 
-def valid_jpron_sequences(obs, jpron_states):
-    obs = obs.split()
-    valid = [['']]
-    non_valid = [['']]
-    for o in obs:
-        vt = []
-        nt = []            
-        for va in valid:
-            if o in jpron_states:
-                vt += [va+[o]]
-            else:
-                nt += [va+[o]]
-            if va[-1]+' '+o in jpron_states:
-                vt += [va[:-1]+[va[-1]+' '+o]]
-            else:
-                nt += [va[:-1]+[va[-1]+' '+o]]
+# def valid_jpron_sequences(obs, jpron_states):
+#     obs = obs.split()
+#     valid = [['']]
+#     non_valid = [['']]
+#     for o in obs:
+#         vt = []
+#         nt = []            
+#         for va in valid:
+#             if o in jpron_states:
+#                 vt += [va+[o]]
+#             else:
+#                 nt += [va+[o]]
+#             if va[-1]+' '+o in jpron_states:
+#                 vt += [va[:-1]+[va[-1]+' '+o]]
+#             else:
+#                 nt += [va[:-1]+[va[-1]+' '+o]]
 
-        for nv in non_valid:        
-            if nv[-1]+' '+o in jpron_states:
-                vt += [nv[:-1]+[nv[-1]+' '+o]]
-            else:
-                nt += [nv[:-1]+[nv[-1]+' '+o]]
-        valid = vt
-        non_valid = nt
+#         for nv in non_valid:        
+#             if nv[-1]+' '+o in jpron_states:
+#                 vt += [nv[:-1]+[nv[-1]+' '+o]]
+#             else:
+#                 nt += [nv[:-1]+[nv[-1]+' '+o]]
+#         valid = vt
+#         non_valid = nt
 
-    valid = [x[1:] for x in valid]
-    return valid
+#     valid = [x[1:] for x in valid]
+#     return valid
 
 
 def Viterbi(obs, bigram, lexicon):    
@@ -83,26 +83,33 @@ def Viterbi(obs, bigram, lexicon):
         backpointer[states.index('<s> '+ en_tr)][0] = states.index(START)        
         
     #recursion
+    b = 0
     for t in xrange(1,T):
         possible_transitions = lexicon[obs[t]].keys()
         # st_list = create_state_list(possible_transitions, bi_transitions)
         # for cur_state in st_list:
         #     s = states.index(cur_state)
-        for s in xrange(N):
-            cur_state = states[s]
-            if cur_state == START or cur_state == END_TAG:
+        for k in xrange(2,-1, -1):
+            if k > t:
                 continue
-            trans = cur_state.split()[1]
-            if lexicon[obs[t]][trans] == 0.0:
-                continue
-            max_index = ()                                     
-            max_index = max((viterbi[states.index(s_p)][t-1]*bigram[cur_state][s_p]*lexicon[obs[t]][trans], states.index(s_p))
-                            for s_p in bigram[cur_state])
-            if max_index[0] == 0.0:                
-                continue
+            cur_obs = ' '.join(obs[t-k:t+1])
+            print cur_obs
+            for s in xrange(N):
+                cur_state = states[s]
+                if cur_state == START or cur_state == END_TAG:
+                    continue
+                trans = cur_state.split()[1]
+                if lexicon[cur_obs][trans] == 0.0:
+                    continue
+                max_index = ()                                     
+                max_index = max((viterbi[states.index(s_p)][b+(k-3)]*bigram[cur_state][s_p]*lexicon[cur_obs][trans], states.index(s_p))
+                                for s_p in bigram[cur_state])
+                if max_index[0] == 0.0:                
+                    continue
 
-            viterbi[s][t] = max_index[0]
-            backpointer[s][t] = max_index[1]
+                if viterbi[s][t-k] < max_index[0]:
+                    viterbi[s][t-k] = max_index[0]
+                    backpointer[s][t-k] = max_index[1]
      
     max_index = max((viterbi[states.index(s_p)][T-1]*bigram[END_TAG][s_p], states.index(s_p))
                                 for s_p in bigram[END_TAG])
@@ -118,25 +125,31 @@ def Viterbi(obs, bigram, lexicon):
     path = ' '.join([x.split()[1] for x in path[::-1]])
     return viterbi[states.index(END_TAG)][T-1], path
 
-def run_viterbi(obs_str, bigram, lexicon):
-    obs_list = valid_jpron_sequences(obs_str, lexicon.keys())
-    results = []
-    for obs in obs_list:
-        results += [Viterbi(obs, bigram, lexicon)]
-    results.sort(reverse = True)
-    return results
+# def run_viterbi(obs_str, bigram, lexicon):
+#     obs_list = valid_jpron_sequences(obs_str, lexicon.keys())
+#     results = []
+#     for obs in obs_list:
+#         results += [Viterbi(obs, bigram, lexicon)]
+#     results.sort(reverse = True)
+#     return results
     
 
 if __name__ == '__main__':
     s1 = time.clock()
     f = sys.stdin
-    lines = f.readlines()
-    lines = ['N A I T O']
+    lines = f.readline()
+
+    arg = sys.argv
+    if len(arg) > 1:        
+        FILEPATH_EPRON_PROBS = arg[1]
+        FILEPATH_EPRON_JPRON_PROBS = arg[2]
+
     lexicon, s = build_lexicon_model(FILEPATH_EPRON_JPRON_PROBS)
     bigram = build_bigram_model(FILEPATH_EPRON_PROBS)    
     for obs_str in lines:
         # obs_str = 'N A I T O'
-        print run_viterbi(obs_str, bigram, lexicon)
+
+        print Viterbi(obs_str.split(), bigram, lexicon)
     s2 = time.clock()
     print 'time: ',s2-s1
 

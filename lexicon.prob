@@ -10,7 +10,7 @@ n : LEAVES # 0.1
 n : CAN # 0.15
 n : TIME # 0.2
 n : LIKE # 0.025
-n : ARROW # 1
+n : ARROW # 1.05
 n : FLIES # 0.1
 n : WORKS # 0.05
 n : FISH # 0.1
